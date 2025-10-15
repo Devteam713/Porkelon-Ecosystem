@@ -1,1 +1,35 @@
-
+{
+  "name": "porkelon-ecosystem",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "compile": "hardhat compile",
+    "typechain": "hardhat typechain",
+    "test": "hardhat test",
+    "coverage": "hardhat coverage",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "format": "prettier --write .",
+    "deploy:mumbai": "hardhat run --network mumbai scripts/deploy.ts",
+    "addliquidity:mumbai": "hardhat run --network mumbai scripts/addLiquidity.ts"
+  },
+  "devDependencies": {
+    "hardhat": "latest",
+    "@nomicfoundation/hardhat-toolbox": "latest",
+    "typescript": "latest",
+    "ts-node": "latest",
+    "typechain": "latest",
+    "@typechain/hardhat": "latest",
+    "typechain-target-ethers-v6": "latest",
+    "@openzeppelin/contracts": "latest",
+    "solidity-coverage": "latest",
+    "eslint": "latest",
+    "prettier": "latest",
+    "husky": "latest",
+    "lint-staged": "latest"
+  },
+  "dependencies": {
+    "ethers": "latest",
+    "dotenv": "latest",
+    "tslib": "latest"
+  }
+}

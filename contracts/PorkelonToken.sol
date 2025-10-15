@@ -89,3 +89,46 @@ contract PorkelonToken is ERC20Permit, ERC20Burnable, Pausable, Ownable {
         super._update(from, to, sendAmount);
     }
 }
+
+
+
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+/// @notice Porkelon ERC20 token (PORK)
+/// - OpenZeppelin audited primitives
+/// - Permit (EIP-2612), Burnable, Pausable, Ownable
+/// - Optional supply cap (immutable)
+import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract PorkelonToken is ERC20Permit, ERC20Burnable, Pausable, Ownable {
+    uint256 public immutable cap; // 0 = uncapped
+
+    constructor(
+        string memory name_,
+        string memory symbol_,
+        uint256 initialSupply,
+        uint256 cap_
+    ) ERC20(name_, symbol_) ERC20Permit(name_) {
+        cap = cap_;
+        if (initialSupply > 0) {
+            _mint(msg.sender, initialSupply);
+        }
+    }
+
+    function pause() external onlyOwner { _pause(); }
+    function unpause() external onlyOwner { _unpause(); }
+
+    function mint(address to, uint256 amount) external onlyOwner {
+        if (cap > 0) require(totalSupply() + amount <= cap, "PORK: cap exceeded");
+        _mint(to, amount);
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override {
+        super._beforeTokenTransfer(from, to, amount);
+        require(!paused(), "PORK: token paused");
+    }
+}

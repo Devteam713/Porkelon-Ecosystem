@@ -1,11 +1,50 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="Porkelon — a lightweight, fast web application." />
+    <meta name="theme-color" content="#0ea5a4" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="referrer" content="no-referrer-when-downgrade" />
+
     <title>Porkelon</title>
+
+    <!-- Favicon & PWA manifest (add files to /public if not present) -->
+    <link rel="icon" href="/favicon.ico" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Performance: modulepreload main module and preconnect external origins if used -->
+    <link rel="modulepreload" href="/src/main.tsx" />
+
+    <!-- Preconnect to common font provider (remove if not using external fonts) -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+
+    <!-- Minimal critical CSS inline to prevent FOUC and provide a good first paint -->
+    <style>
+      :root { color-scheme: light dark; }
+      html, body, #root { height: 100%; }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background: #ffffff;
+        color: #0b1220;
+      }
+    </style>
   </head>
+
   <body>
-    <div id="root"></div>
+    <!-- Accessible mount point for the app -->
+    <div id="root" role="application" aria-label="Porkelon application"></div>
+
+    <noscript>
+      JavaScript is required to run this application. Please enable JavaScript in your browser.
+    </noscript>
+
+    <!-- Entry point: keep as ES module for modern bundlers (Vite/Rollup/Esbuild) -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

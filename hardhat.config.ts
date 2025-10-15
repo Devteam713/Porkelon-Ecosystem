@@ -3,7 +3,19 @@ import "@nomicfoundation/hardhat-toolbox";
 import "@typechain/hardhat";
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+require('@nomiclabs/hardhat-waffle');
+require('@nomiclabs/hardhat-ethers');
 
+module.exports = {
+  solidity: "0.8.19",
+  networks: {
+    amoy: {
+      url: 'https://rpc-amoy.polygon.technology',
+      chainId: 80002,
+      accounts: [`0x${process.env.DEPLOYER_PRIVATE_KEY}`],
+    },
+  },
+};
 const config: HardhatUserConfig = {
   solidity: "0.8.24",
   mocha: {

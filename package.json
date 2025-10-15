@@ -9,8 +9,7 @@
     "coverage": "hardhat coverage",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "format": "prettier --write .",
-    "deploy:mumbai": "hardhat run --network mumbai scripts/deploy.ts",
-    "addliquidity:mumbai": "hardhat run --network mumbai scripts/addLiquidity.ts"
+    "addliquidity:amoy": "hardhat run --network amoy scripts/addLiquidity.ts"
   },
   "devDependencies": {
     "hardhat": "latest",

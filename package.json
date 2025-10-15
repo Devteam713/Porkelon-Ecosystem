@@ -2,33 +2,72 @@
   "name": "porkelon-ecosystem",
   "version": "1.0.0",
   "private": true,
+  "description": "Smart-contract monorepo for the Porkelon ecosystem",
+  "author": "Devteam713 <devteam713@example.com>",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Devteam713/Porkelon-Ecosystem.git"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
     "compile": "hardhat compile",
+    "build": "tsc -p tsconfig.json",
     "typechain": "hardhat typechain",
-    "test": "hardhat test",
+    "test": "hardhat test --no-compile",
     "coverage": "hardhat coverage",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
     "format": "prettier --write .",
+    "prettier:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf cache artifacts typechain node_modules/.cache",
+    "prepare": "husky install",
+    "pretest": "npm run typecheck",
     "addliquidity:amoy": "hardhat run --network amoy scripts/addLiquidity.ts"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "npm test"
+    }
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write",
+      "git add"
+    ],
+    "*.json": [
+      "prettier --write",
+      "git add"
+    ],
+    "*.md": [
+      "prettier --write",
+      "git add"
+    ]
+  },
   "devDependencies": {
-    "hardhat": "latest",
-    "@nomicfoundation/hardhat-toolbox": "latest",
-    "typescript": "latest",
-    "ts-node": "latest",
-    "typechain": "latest",
-    "@typechain/hardhat": "latest",
-    "typechain-target-ethers-v6": "latest",
-    "@openzeppelin/contracts": "latest",
-    "solidity-coverage": "latest",
-    "eslint": "latest",
-    "prettier": "latest",
-    "husky": "latest",
-    "lint-staged": "latest"
+    "hardhat": "^2.16.0",
+    "@nomicfoundation/hardhat-toolbox": "^2.0.0",
+    "typescript": "^5.1.0",
+    "ts-node": "^10.9.1",
+    "typechain": "^8.0.0",
+    "@typechain/hardhat": "^8.0.0",
+    "typechain-target-ethers-v6": "^1.0.0",
+    "@openzeppelin/contracts": "^4.9.0",
+    "solidity-coverage": "^0.8.0",
+    "eslint": "^8.20.0",
+    "prettier": "^2.8.8",
+    "husky": "^8.0.0",
+    "lint-staged": "^13.0.0"
   },
   "dependencies": {
-    "ethers": "latest",
-    "dotenv": "latest",
-    "tslib": "latest"
+    "ethers": "^6.6.0",
+    "dotenv": "^16.0.0",
+    "tslib": "^2.5.0"
   }
 }

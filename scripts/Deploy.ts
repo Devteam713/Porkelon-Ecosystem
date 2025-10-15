@@ -60,3 +60,34 @@ main().catch((err) => {
   console.error(err);
   process.exit(1);
 });
+// --- after deploying token, presale, staking, nft, market ---
+const LiquidityMining = await ethers.getContractFactory("LiquidityMining");
+const lpPairAddress = process.env.PAIR_ADDRESS!; // the PORK/WMATIC or PORK/USDT LP token address
+const liquidityMining = await LiquidityMining.deploy(lpPairAddress, token.target);
+await liquidityMining.deployed();
+console.log("LiquidityMining:", liquidityMining.target);
+
+// Fund the liquidity mining reward pool:
+// Example: netTotalRewards = 5_000_000 PORK
+const netTotal = ethers.parseUnits("5000000", 18);
+
+// compute gross needed on JS side to match TAX_BPS = 100 (1%)
+const TAX_BPS = 100n;
+const BPS = 10000n;
+const NET_DENOM = BPS - TAX_BPS; // 9900
+// gross = ceil(netTotal * BPS / NET_DENOM)
+const grossNumerator = netTotal * BigInt(BPS);
+let gross = grossNumerator / BigInt(NET_DENOM);
+if (grossNumerator % BigInt(NET_DENOM) !== 0n) gross = gross + 1n;
+
+console.log("Need to transfer gross PORK:", gross.toString());
+
+// Transfer gross PORK from deployer (deployer must hold enough PORK)
+const tokenContract = await ethers.getContractAt("PorkelonToken", token.target);
+await (await tokenContract.transfer(liquidityMining.target, gross)).wait();
+console.log("Funded LiquidityMining with gross PORK");
+
+// Notify reward amount (net) and duration (e.g., 30 days)
+const durationSeconds = 60 * 60 * 24 * 30;
+await (await liquidityMining.notifyRewardAmount(netTotal, durationSeconds)).wait();
+console.log("LiquidityMining configured to distribute net", netTotal.toString(), "over", durationSeconds, "seconds");

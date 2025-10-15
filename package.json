@@ -27,7 +27,14 @@
     "clean": "rm -rf cache artifacts typechain node_modules/.cache",
     "prepare": "husky install",
     "pretest": "npm run typecheck",
-    "addliquidity:amoy": "hardhat run --network amoy scripts/addLiquidity.ts"
+    "addliquidity:amoy": "hardhat run --network amoy scripts/addLiquidity.ts",
+    "deploy:polygon": "hardhat run --network polygon scripts/deploy-and-distribute.js",
+    "deploy:locker": "hardhat run --network polygon scripts/deploy-locker.js",
+    "deploy:locker-and-lock": "hardhat run --network polygon scripts/deploy-and-lock.js",
+    "deploy:presale": "hardhat run --network polygon scripts/deploy-presale.js",
+    "verify:impl": "node ./scripts/verify-implementation.js",
+    "verify:contract": "hardhat verify --network polygon",
+    "verify:locker": "hardhat verify --network polygon <LOCKER_ADDRESS> <UNICRYPT_LOCKER_ADDRESS> <LP_TOKEN_ADDRESS>"
   },
   "husky": {
     "hooks": {
@@ -53,17 +60,20 @@
   "devDependencies": {
     "hardhat": "^2.16.0",
     "@nomicfoundation/hardhat-toolbox": "^2.0.0",
+    "@openzeppelin/contracts": "^4.9.0",
+    "@openzeppelin/contracts-upgradeable": "^4.9.0",
+    "@openzeppelin/hardhat-upgrades": "^1.28.0",
     "typescript": "^5.1.0",
     "ts-node": "^10.9.1",
     "typechain": "^8.0.0",
     "@typechain/hardhat": "^8.0.0",
     "typechain-target-ethers-v6": "^1.0.0",
-    "@openzeppelin/contracts": "^4.9.0",
     "solidity-coverage": "^0.8.0",
     "eslint": "^8.20.0",
     "prettier": "^2.8.8",
     "husky": "^8.0.0",
-    "lint-staged": "^13.0.0"
+    "lint-staged": "^13.0.0",
+    "@nomiclabs/hardhat-etherscan": "^3.1.0"
   },
   "dependencies": {
     "ethers": "^6.6.0",

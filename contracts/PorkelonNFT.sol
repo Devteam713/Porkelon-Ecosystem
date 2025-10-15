@@ -1,59 +1,54 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-/**
- * @title PorkelonNFT
- * @notice Mintable NFT with ERC2981 royalties, supports payment in PORK.
- */
 contract PorkelonNFT is ERC721URIStorage, ERC2981, Ownable {
-    using SafeERC20 for IERC20;
-
-    IERC20 public pork;
-    uint256 public nextId;
+    uint256 public nextTokenId;
     uint256 public maxSupply;
-    bool public mintEnabled;
+    bool public publicMintEnabled;
     uint256 public mintPrice;
-    bool public payInPork;
 
-    constructor(address _pork, uint256 _maxSupply, uint96 royaltyBps)
-        ERC721("PorkelonNFT", "PNFT")
-        Ownable(msg.sender)
-    {
-        pork = IERC20(_pork);
+    event Minted(address indexed minter, uint256 tokenId, string tokenURI);
+
+    constructor(string memory name_, string memory symbol_, uint256 _maxSupply, uint96 defaultRoyaltyBps) ERC721(name_, symbol_) {
         maxSupply = _maxSupply;
-        _setDefaultRoyalty(msg.sender, royaltyBps);
+        _setDefaultRoyalty(msg.sender, defaultRoyaltyBps);
     }
 
-    function mint(string calldata uri) external payable {
-        require(mintEnabled, "mint disabled");
-        require(nextId < maxSupply, "sold out");
-        if (payInPork) {
-            pork.safeTransferFrom(msg.sender, owner(), mintPrice);
-        } else {
-            require(msg.value >= mintPrice, "underpay");
-        }
-        nextId++;
-        _safeMint(msg.sender, nextId);
-        _setTokenURI(nextId, uri);
+    function ownerMint(address to, string calldata tokenURI) external onlyOwner returns (uint256) {
+        require(nextTokenId < maxSupply, "sold out");
+        uint256 tid = ++nextTokenId;
+        _safeMint(to, tid);
+        _setTokenURI(tid, tokenURI);
+        emit Minted(to, tid, tokenURI);
+        return tid;
     }
 
-    function setMintOptions(bool enabled, bool usePork, uint256 price) external onlyOwner {
-        mintEnabled = enabled;
-        payInPork = usePork;
-        mintPrice = price;
+    function publicMint(string calldata tokenURI) external payable returns (uint256) {
+        require(publicMintEnabled, "public mint disabled");
+        require(nextTokenId < maxSupply, "sold out");
+        require(msg.value >= mintPrice, "insufficient ETH");
+        uint256 tid = ++nextTokenId;
+        _safeMint(msg.sender, tid);
+        _setTokenURI(tid, tokenURI);
+        emit Minted(msg.sender, tid, tokenURI);
+        return tid;
+    }
+
+    function setPublicMintEnabled(bool v) external onlyOwner { publicMintEnabled = v; }
+    function setMintPrice(uint256 p) external onlyOwner { mintPrice = p; }
+    function setDefaultRoyalty(address receiver, uint96 bps) external onlyOwner {
+        _setDefaultRoyalty(receiver, bps);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, ERC2981) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 
     function withdraw(address payable to) external onlyOwner {
         to.transfer(address(this).balance);
-    }
-
-    function supportsInterface(bytes4 id) public view override(ERC721, ERC2981) returns (bool) {
-        return super.supportsInterface(id);
     }
 }

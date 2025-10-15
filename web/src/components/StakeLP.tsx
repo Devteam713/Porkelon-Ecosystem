@@ -1,55 +1,65 @@
-import React, { useState, useEffect } from "react";
-import { useAccount, useSigner } from "wagmi";
-import { useContractInstances } from "../hooks/useContracts";
-import { ethers } from "ethers";
+// src/components/StakeLP.tsx
+import React, { useEffect, useState } from "react";
+import { useWagmiContracts } from "../hooks/useWagmiContracts";
+import { useAccount } from "wagmi";
+import { parseUnits, formatUnits, waitTx } from "../utils/tx";
 
 export default function StakeLP() {
+  const { liquidityMining, signer } = useWagmiContracts();
   const { address } = useAccount();
-  const { mining, provider } = useContractInstances();
-  const signerHook = useSigner();
-  const signer = signerHook.data;
-  const [stakeAmount, setStakeAmount] = useState("0");
-  const [balance, setBalance] = useState("0");
+  const [lpAddr, setLpAddr] = useState<string | null>(null);
+  const [staked, setStaked] = useState("0");
+  const [pending, setPending] = useState("0");
+  const [amount, setAmount] = useState("0");
+  const [loading, setLoading] = useState(false);
 
-  // LP token address is mining.lpToken? Not read here; we assume user already has LP tokens
   useEffect(() => {
-    async function load() {
-      if (!address) return;
-      // try to read staking contract balanceOf
+    if (!liquidityMining || !address) return;
+    let mounted = true;
+    (async () => {
       try {
-        const bal = await mining.balanceOf(address);
-        setBalance(ethers.formatUnits(bal, 18));
-      } catch (e) {
-        console.error(e);
+        const lp = await liquidityMining.lpToken();
+        if (mounted) setLpAddr(lp);
+        const st = await liquidityMining.balanceOf(address);
+        const earned = await liquidityMining.earned(address);
+        if (mounted) {
+          setStaked(formatUnits(st, 18));
+          setPending(formatUnits(earned, 18));
+        }
+      } catch (err) {
+        console.error(err);
       }
-    }
-    load();
-  }, [address]);
+    })();
+    return () => { mounted = false; };
+  }, [liquidityMining, address]);
 
   async function stake() {
     try {
       if (!signer) throw new Error("connect wallet");
-      const signerInstance = signer;
-      // get LP token address via mining.lpToken (public), then approve
-      const lpAddr = await mining.lpToken();
-      const lpAbi = [{ "constant": false, "inputs": [{ "name": "_spender","type":"address" },{ "name":"_value","type":"uint256" }], "name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function" }];
-      const lp = new ethers.Contract(lpAddr, lpAbi, signerInstance);
-      const amt = ethers.parseUnits(stakeAmount, 18);
-      await (await lp.approve(mining.target, amt)).wait();
-      const tx = await mining.connect(signerInstance).stake(amt);
-      await tx.wait();
+      setLoading(true);
+      const lp = new (await import("ethers")).ethers.Contract(lpAddr!, ["function approve(address,uint256) public returns (bool)"], signer);
+      const amt = parseUnits(amount, 18);
+      await waitTx(lp.approve(liquidityMining.target, amt));
+      const tx = await liquidityMining.connect(signer).stake(amt);
+      await waitTx(tx);
       alert("Staked!");
+      // refresh
+      const st = await liquidityMining.balanceOf(address);
+      setStaked(formatUnits(st, 18));
     } catch (e: any) {
       console.error(e);
       alert("Error: " + (e?.message ?? e));
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
     <div>
-      <div>Staked balance: {balance} LP</div>
-      <input value={stakeAmount} onChange={(e) => setStakeAmount(e.target.value)} placeholder="Amount" />
-      <button onClick={stake}>Stake LP</button>
+      <div>Staked: {staked} LP</div>
+      <div>Pending net rewards: {pending} PORK</div>
+      <input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount LP to stake" />
+      <button onClick={stake} disabled={loading}>{loading ? "Staking..." : "Stake LP"}</button>
     </div>
   );
 }

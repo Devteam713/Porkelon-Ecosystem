@@ -1,6 +1,15 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@typechain/hardhat";
+import { HardhatUserConfig } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
+
+const config: HardhatUserConfig = {
+  solidity: "0.8.24",
+  mocha: {
+    timeout: 1000000,
+  },
+};
 
 const config: HardhatUserConfig = {
   solidity: {

@@ -54,3 +54,24 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 -Audit the presale contract for reentrancy, overflow, and access control issues.
 -Add max buy limits and slippage protection in the contract.
 -Use HTTPS for deployment to secure wallet interactions.
+---
+### Setup Instructions ###
+---
+Initialize Project:
+npm create vite@latest porkelon-presale -- --template react-ts
+cd porkelon-presale
+npm install web3 @types/web3 tailwindcss postcss autoprefixer @rainbow-me/rainbowkit wagmi viem
+Replace Files:
+Use the provided index.html from previous responses.
+Copy the above files into /src and configuration files into the root.
+Update Contract Addresses:
+Replace PRESALE_CONTRACT, STAKING_CONTRACT, and LIQUIDITY_CONTRACT in constants.ts with your deployed contract addresses.
+Update ABI with the full contract interfaces if available.
+Test on Amoy:
+Deploy contracts to Amoy testnet (CHAIN_ID: 80002) using Remix/Hardhat.
+Get test MATIC from Polygon Faucet.
+Run: npm run dev.
+Mainnet Deployment:
+Update CHAIN_ID to 137 and POLYGON_RPC to 'https://polygon-rpc.com/'.
+Deploy contracts to Polygon mainnet.
+Build and deploy: npm run build and host on Vercel/Netlify.

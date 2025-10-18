@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWeb3 } from '../hooks/useWeb3';
 import { Web3Extended } from '../hooks/useWeb3';
 import { TOKEN_CONTRACT, STAKING_CONTRACT } from '../utils/constants';
@@ -13,6 +13,20 @@ const StakeWidget: React.FC<StakeWidgetProps> = ({ account, web3, stakeTokens })
   const { balance, stakedBalance } = useWeb3();
   const [amount, setAmount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [pendingRewards, setPendingRewards] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchRewards = async () => {
+      if (web3 && account) {
+        const stakingContract = new web3.eth.Contract(ABI, STAKING_CONTRACT);
+        const rewards = await stakingContract.methods.getPendingRewards(account).call();
+        setPendingRewards(Number(web3.utils.fromWei(rewards, 'ether')));
+      }
+    };
+    fetchRewards();
+    const interval = setInterval(fetchRewards, 60000); // Update every minute
+    return () => clearInterval(interval);
+  }, [web3, account]);
 
   const handleApprove = async () => {
     if (!web3 || !account || amount <= 0) {
@@ -48,6 +62,28 @@ const StakeWidget: React.FC<StakeWidgetProps> = ({ account, web3, stakeTokens })
     }
   };
 
+  const handleClaimRewards = async () => {
+    if (!web3 || !account) {
+      alert('Connect wallet first!');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const stakingContract = new web3.eth.Contract(ABI, STAKING_CONTRACT);
+      await stakingContract.methods.claimRewards().send({
+        from: account,
+        gas: await stakingContract.methods.claimRewards().estimateGas({ from: account }),
+      });
+      alert('Rewards claimed successfully!');
+      setPendingRewards(0);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Claiming rewards failed.';
+      alert(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!account || !web3) {
     return <p className="text-center text-gray-300">Connect wallet to stake $PORK.</p>;
   }
@@ -56,6 +92,7 @@ const StakeWidget: React.FC<StakeWidgetProps> = ({ account, web3, stakeTokens })
     <div className="space-y-4">
       <p className="text-sm text-gray-300">Your Balance: {balance.toLocaleString()} $PORK</p>
       <p className="text-sm text-gray-300">Staked: {stakedBalance.toLocaleString()} $PORK</p>
+      <p className="text-sm text-gray-300">Pending Rewards: {pendingRewards.toLocaleString()} $PORK</p>
       <label htmlFor="stake-amount" className="block text-sm font-medium">Stake Amount ($PORK)</label>
       <input
         id="stake-amount"
@@ -86,6 +123,13 @@ const StakeWidget: React.FC<StakeWidgetProps> = ({ account, web3, stakeTokens })
           {isLoading ? 'Staking...' : 'Stake $PORK'}
         </button>
       </div>
+      <button
+        onClick={handleClaimRewards}
+        disabled={isLoading || pendingRewards === 0}
+        className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg font-semibold disabled:bg-gray-500 disabled:cursor-not-allowed"
+      >
+        {isLoading ? 'Claiming...' : 'Claim Rewards'}
+      </button>
     </div>
   );
 };

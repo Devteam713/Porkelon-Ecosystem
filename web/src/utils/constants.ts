@@ -1,4 +1,3 @@
-// JSON ABI type for type-safe contract interactions
 interface ContractMethod {
   inputs: { internalType: string; name: string; type: string }[];
   name: string;
@@ -10,7 +9,6 @@ interface ContractMethod {
 export const POLYGON_RPC: string = 'https://rpc-amoy.polygon.technology/';
 export const CHAIN_ID: number = 80002; // Amoy testnet (use 137 for mainnet)
 export const PRESALE_CONTRACT: `0x${string}` = '0xYourPresaleContractAddressHere'; // Replace with actual address
-export const TOKEN_CONTRACT: `0x${string}` = '0x7f024bd81c22dafae5ecca46912acd94511210d8';
 export const PRICE_PER_PORK: number = 0.00005; // MATIC per PORK
 export const ABI: ContractMethod[] = [
   {
@@ -18,6 +16,13 @@ export const ABI: ContractMethod[] = [
     name: 'buyTokens',
     outputs: [],
     stateMutability: 'payable',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'totalRaised',
+    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+    stateMutability: 'view',
     type: 'function',
   },
 ];

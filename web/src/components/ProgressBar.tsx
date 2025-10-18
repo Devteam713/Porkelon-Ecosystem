@@ -1,11 +1,13 @@
-import { useWeb3 } from '../hooks/useWeb3';
+interface ProgressBarProps {
+  raised: number;
+  goal: number;
+}
 
-const ProgressBar: React.FC = () => {
-  const { raised, goal } = useWeb3();
+const ProgressBar: React.FC<ProgressBarProps> = ({ raised, goal }) => {
   const progress = ((raised / goal) * 100).toFixed(2);
 
   return (
-    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 w-full max-w-md">
+    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6">
       <h2 className="text-2xl font-semibold mb-4 text-center">Presale Progress</h2>
       <div className="relative">
         <div className="bg-white/20 h-4 rounded-full overflow-hidden">

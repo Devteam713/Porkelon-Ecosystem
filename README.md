@@ -45,3 +45,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <App />
   </React.StrictMode>
 );
+## Setup and Deployment Instructions
+### Setup Project:
+## Build: npm run build.
+## Deploy to Vercel/Netlify: Push to GitHub and link to a static hosting service.
+## Ensure CORS and RPC endpoints are accessible.
+### Security:
+-Audit the presale contract for reentrancy, overflow, and access control issues.
+-Add max buy limits and slippage protection in the contract.
+-Use HTTPS for deployment to secure wallet interactions.

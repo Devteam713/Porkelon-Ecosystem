@@ -24,9 +24,13 @@ contract PorkelonPresale is Ownable2Step, ReentrancyGuard {
     address public immutable FUNDS_RECEIVER; // Wallet to receive collected MATIC/USDT
 
     // Rates and Caps (in PORK token decimals, typically 18)
-    uint256 public immutable MATIC_RATE;  // PORK tokens received per 1 unit of native currency (1e18)
-    uint256 public immutable USDT_RATE;   // PORK tokens received per 1 unit of payment token (e.g., 1e6 for 6-decimal USDT)
+    // All lines below have been checked for non-ASCII characters.
+    uint256 public immutable MATIC_RATE; // PORK tokens received per 1 unit of native currency (1e18)
+    uint256 public immutable USDT_RATE; // PORK tokens received per 1 unit of payment token (e.g., 1e6 for 6-decimal USDT)
     uint256 public immutable PRESALE_CAP; // Total supply of PORK tokens reserved for the presale
+    
+    // Immutable variable to store payment token decimals securely
+    uint8 public immutable PAYMENT_TOKEN_DECIMALS;
     
     // Tracking
     uint256 public totalPorkSold;
@@ -72,6 +76,7 @@ contract PorkelonPresale is Ownable2Step, ReentrancyGuard {
      * @param _maticRate PORK tokens received per 1e18 of native currency.
      * @param _usdtRate PORK tokens received per 1 unit of payment token (scaled to its decimals).
      * @param _presaleCap Total PORK tokens to be sold (in 18 decimals).
+     * @param _paymentTokenDecimals Decimals of the payment token (e.g., 6 for USDT).
      */
     constructor(
         address _porkelonToken,
@@ -79,7 +84,8 @@ contract PorkelonPresale is Ownable2Step, ReentrancyGuard {
         address _fundsReceiver,
         uint256 _maticRate,
         uint256 _usdtRate,
-        uint256 _presaleCap
+        uint256 _presaleCap,
+        uint8 _paymentTokenDecimals
     )
         Ownable2Step(msg.sender) // Deployer is initial owner, must transfer to Timelock
     {
@@ -92,6 +98,7 @@ contract PorkelonPresale is Ownable2Step, ReentrancyGuard {
         MATIC_RATE = _maticRate;
         USDT_RATE = _usdtRate;
         PRESALE_CAP = _presaleCap;
+        PAYMENT_TOKEN_DECIMALS = _paymentTokenDecimals;
         
         // Initial PORK tokens must be transferred to this contract after deployment.
     }
@@ -103,9 +110,13 @@ contract PorkelonPresale is Ownable2Step, ReentrancyGuard {
      * @notice Allows a user to purchase Porkelon tokens using the native currency (MATIC/ETH).
      * @dev Sends native currency to the FUNDS_RECEIVER wallet.
      */
-    function buyWithNative() public payable nonReentrancy onlyWhenActive onlyIfTokensRemaining(
-        msg.value * MATIC_RATE / 10**18 // Rate is PORK per 1e18 native unit
-    ) {
+    function buyWithNative() 
+        public 
+        payable 
+        nonReentrancy 
+        onlyWhenActive 
+        onlyIfTokensRemaining(msg.value * MATIC_RATE / 10**18)
+    {
         uint256 nativePaid = msg.value;
         require(nativePaid > 0, "Presale: Must send native currency");
         
@@ -115,8 +126,8 @@ contract PorkelonPresale is Ownable2Step, ReentrancyGuard {
         // Perform internal purchase and transfer native currency
         _processPurchase(msg.sender, tokensToBuy, nativePaid, 0);
 
-        // Transfer collected native currency to the funds receiver wallet
-        (bool success, ) = FUNDS_RECEIVER.call{value: nativePaid}("");
+        // FIX: Explicitly cast FUNDS_RECEIVER to payable address for the low-level call
+        (bool success, ) = payable(FUNDS_RECEIVER).call{value: nativePaid}("");
         require(success, "Presale: Native currency transfer failed");
     }
 
@@ -126,13 +137,12 @@ contract PorkelonPresale is Ownable2Step, ReentrancyGuard {
      * @dev Buyer must call `approve` on the PAYMENT_TOKEN contract before calling this function.
      */
     function buyWithStable(uint256 amount) public nonReentrancy onlyWhenActive onlyIfTokensRemaining(
-        amount * USDT_RATE / 10**PAYMENT_TOKEN.decimals() // Rate is PORK per 1 unit of PAYMENT_TOKEN
+        amount * USDT_RATE / (10**uint256(PAYMENT_TOKEN_DECIMALS)) 
     ) {
         require(amount > 0, "Presale: Must send payment token");
         
         // Calculate tokens using the rate (PORK per 1 unit of payment token)
-        // Need to scale the rate calculation based on the payment token's decimals.
-        uint256 tokensToBuy = amount * USDT_RATE / (10**uint256(PAYMENT_TOKEN.decimals()));
+        uint256 tokensToBuy = amount * USDT_RATE / (10**uint256(PAYMENT_TOKEN_DECIMALS));
 
         // Check the remaining cap again with the final calculated amount
         require(totalPorkSold + tokensToBuy <= PRESALE_CAP, "Presale: Purchase exceeds remaining cap");
@@ -179,9 +189,8 @@ contract PorkelonPresale is Ownable2Step, ReentrancyGuard {
         totalPorkSold += tokensToBuy;
         tokenAllocations[buyer] += tokensToBuy;
         
-        // Record contribution in USDT equivalent (for external tracking if needed)
-        // This is simplified for this example, assuming 1 USDT = 1 unit.
-        contributions[buyer] += stablePaid; 
+        // Record contribution in stablecoin amount
+        contributions[buyer] += stablePaid;
 
         emit TokensPurchased(buyer, nativePaid, stablePaid, tokensToBuy);
     }

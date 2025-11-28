@@ -1,67 +1,72 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-/**
- * @title LiquidityMining
- * @notice Simple liquidity-mining contract where LP token holders stake their LP tokens
- *         to earn PORK rewards. Rewards are denominated as **net** amounts to be received
- *         by users. Because PORK charges 1% on all transfers, this contract gross-ups
- *         reward transfers so the user receives the net reward intended.
- *
- * Token tax assumptions:
- *  - TAX_BPS must match the PORK token tax (100 bps = 1%).
- *  - When we transfer `gross` PORK to user, PORK token will send `tax = gross * TAX_BPS / 10000`
- *    to devWallet and user will receive `gross - tax`. We compute `gross` so that:
- *       net = gross * (10000 - TAX_BPS) / 10000
- *    => gross = ceil( net * 10000 / (10000 - TAX_BPS) )
- *
- * Notes:
- *  - Owner must fund this contract with enough PORK (gross amounts) prior to notifyRewardAmount.
- *  - Uses rewardRate over duration (notifyRewardAmount) similar to many staking contracts.
- */
-
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+/**
+ * @title LiquidityMining — Tax-Aware LP Staking Rewards
+ * @notice Users stake QuickSwap/Uniswap LP tokens → earn PORK rewards
+ *         Fully compatible with 1% transfer tax tokens (gross-up logic included)
+ * @dev Deploy with reward token only → call setLpToken() once after liquidity is added
+ */
 contract LiquidityMining is ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
 
-    // LP token staked (e.g., Uniswap/QuickSwap pair)
-    IERC20 public immutable lpToken;
-    // Reward token (PORK)
-    IERC20 public immutable rewardToken;
+    // ──────────────────────────────────────────────────────────────
+    // Storage
+    // ──────────────────────────────────────────────────────────────
+    IERC20 public lpToken;                    // Mutable once via setLpToken()
+    IERC20 public immutable rewardToken;      // PORK
+    bool public lpTokenSet;
 
-    // Reward accounting
-    uint256 public rewardRate; // reward tokens (net) per second, in net terms (we will gross-up on transfers)
+    uint256 public rewardRate;                // Net rewards per second
     uint256 public lastUpdateTime;
     uint256 public rewardPerTokenStored;
     uint256 public periodFinish;
 
-    // user accounting
     mapping(address => uint256) public userRewardPerTokenPaid;
-    mapping(address => uint256) public rewards; // rewards (net) accumulated
+    mapping(address => uint256) public rewards; // Pending net rewards
 
     uint256 private _totalSupply;
     mapping(address => uint256) private _balances;
 
-    // Tax settings — MUST match the PORK tax
-    uint256 public constant TAX_BPS = 100; // 100 = 1%
+    // Tax configuration — MUST match PORK token tax
+    uint256 public constant TAX_BPS = 100;           // 1% = 100 bps
     uint256 public constant BPS_DIVISOR = 10000;
-    uint256 private constant NET_DENOM = BPS_DIVISOR - TAX_BPS; // 9900 for 1% tax
+    uint256 private constant NET_DENOM = BPS_DIVISOR - TAX_BPS; // 9900
 
+    // ──────────────────────────────────────────────────────────────
+    // Events
+    // ──────────────────────────────────────────────────────────────
     event Staked(address indexed user, uint256 amount);
     event Withdrawn(address indexed user, uint256 amount);
     event RewardPaid(address indexed user, uint256 netReward);
     event RewardAdded(uint256 netReward, uint256 duration);
+    event LpTokenSet(address indexed lpToken);
 
-    constructor(address _lpToken, address _rewardToken) Ownable() {
-        require(_lpToken != address(0) && _rewardToken != address(0), "invalid addresses");
-        lpToken = IERC20(_lpToken);
+    // ──────────────────────────────────────────────────────────────
+    // Constructor & Setup
+    // ──────────────────────────────────────────────────────────────
+    constructor(address _rewardToken) Ownable(msg.sender) {
+        require(_rewardToken != address(0), "Reward token zero");
         rewardToken = IERC20(_rewardToken);
     }
 
+    /// @notice One-time function to set the LP token after liquidity is added
+    function setLpToken(address _lpToken) external onlyOwner {
+        require(!lpTokenSet, "LP token already set");
+        require(_lpToken != address(0), "LP token zero");
+        lpToken = IERC20(_lpToken);
+        lpTokenSet = true;
+        emit LpTokenSet(_lpToken);
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // Modifiers & Views
+    // ──────────────────────────────────────────────────────────────
     modifier updateReward(address account) {
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastTimeRewardApplicable();
@@ -72,32 +77,29 @@ contract LiquidityMining is ReentrancyGuard, Ownable {
         _;
     }
 
-    // --- view helpers ---
     function lastTimeRewardApplicable() public view returns (uint256) {
         return block.timestamp < periodFinish ? block.timestamp : periodFinish;
     }
 
-    // rewardPerTokenStored expressed in net reward * 1e18
     function rewardPerToken() public view returns (uint256) {
         if (_totalSupply == 0) return rewardPerTokenStored;
         uint256 timeDelta = lastTimeRewardApplicable() - lastUpdateTime;
-        // rewardRate is net reward per second (desired net tokens distributed per second)
         return rewardPerTokenStored + (timeDelta * rewardRate * 1e18) / _totalSupply;
     }
 
-    // earned(X) returns net reward accumulated for user X (not yet claimed)
     function earned(address account) public view returns (uint256) {
         return (_balances[account] * (rewardPerToken() - userRewardPerTokenPaid[account])) / 1e18 + rewards[account];
     }
 
-    // totalSupply / balanceOf
     function totalSupply() external view returns (uint256) { return _totalSupply; }
     function balanceOf(address account) external view returns (uint256) { return _balances[account]; }
 
-    // --- user actions ---
-
+    // ──────────────────────────────────────────────────────────────
+    // User Functions
+    // ──────────────────────────────────────────────────────────────
     function stake(uint256 amount) external nonReentrant updateReward(msg.sender) {
-        require(amount > 0, "stake 0");
+        require(lpTokenSet, "LP token not set");
+        require(amount > 0, "Cannot stake 0");
         _totalSupply += amount;
         _balances[msg.sender] += amount;
         lpToken.safeTransferFrom(msg.sender, address(this), amount);
@@ -105,58 +107,44 @@ contract LiquidityMining is ReentrancyGuard, Ownable {
     }
 
     function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
-        require(amount > 0, "withdraw 0");
+        require(amount > 0, "Cannot withdraw 0");
+        require(_balances[msg.sender] >= amount, "Insufficient balance");
         _totalSupply -= amount;
         _balances[msg.sender] -= amount;
         lpToken.safeTransfer(msg.sender, amount);
         emit Withdrawn(msg.sender, amount);
     }
 
-    // withdraw all + get reward convenience
     function exit() external {
         withdraw(_balances[msg.sender]);
         getReward();
     }
 
-    // getReward pays out the user's earned net reward; we gross-up so the net arrives after PORK tax
     function getReward() public nonReentrant updateReward(msg.sender) {
         uint256 netReward = rewards[msg.sender];
         if (netReward == 0) return;
         rewards[msg.sender] = 0;
 
-        // compute gross such that after token tax, the user receives `netReward`
-        // gross = ceil(netReward * BPS_DIVISOR / NET_DENOM)
-        // To avoid rounding giving less net, we compute as:
+        // Gross-up so user receives exactly netReward after 1% tax
         uint256 grossNumerator = netReward * BPS_DIVISOR;
         uint256 gross = grossNumerator / NET_DENOM;
         if (grossNumerator % NET_DENOM != 0) {
-            gross += 1; // ceil
+            gross += 1; // ceil division
         }
 
-        // ensure contract has enough rewardToken balance
-        uint256 bal = rewardToken.balanceOf(address(this));
-        require(bal >= gross, "insufficient reward pool");
-
-        // transfer gross => token takes TAX_BPS to devWallet; recipient receives netReward (approx)
+        require(rewardToken.balanceOf(address(this)) >= gross, "Insufficient reward pool");
         rewardToken.safeTransfer(msg.sender, gross);
 
         emit RewardPaid(msg.sender, netReward);
     }
 
-    // --- admin: fund and configure rewards ---
-
-    /**
-     * @notice Owner funds rewards (PORK) to this contract off-chain by sending PORK to this address,
-     *         then calls notifyRewardAmount with the net reward to distribute and the duration.
-     * @param netReward Net amount (what users in total should receive) to distribute across `duration` seconds
-     * @param duration seconds duration for distribution
-     *
-     * Note: The owner must ensure to transfer the required **gross** amount into this contract first:
-     * grossTotal = ceil(netRewardTotal * BPS_DIVISOR / NET_DENOM)
-     */
+    // ──────────────────────────────────────────────────────────────
+    // Owner Functions
+    // ──────────────────────────────────────────────────────────────
     function notifyRewardAmount(uint256 netReward, uint256 duration) external onlyOwner updateReward(address(0)) {
-        require(duration > 0, "duration 0");
-        // compute reward rate in net/second
+        require(duration > 0, "Duration zero");
+        require(netReward > 0, "Reward zero");
+
         if (block.timestamp >= periodFinish) {
             rewardRate = netReward / duration;
         } else {
@@ -164,15 +152,16 @@ contract LiquidityMining is ReentrancyGuard, Ownable {
             uint256 leftover = remaining * rewardRate;
             rewardRate = (netReward + leftover) / duration;
         }
+
         lastUpdateTime = block.timestamp;
         periodFinish = block.timestamp + duration;
 
         emit RewardAdded(netReward, duration);
     }
 
-    // emergency rescue for tokens other than rewardToken & lpToken
+    /// @notice Rescue any ERC20 except LP or reward token
     function rescueERC20(address token, address to, uint256 amount) external onlyOwner {
-        require(token != address(rewardToken) && token != address(lpToken), "cannot rescue core tokens");
+        require(token != address(rewardToken) && token != address(lpToken), "Cannot rescue core tokens");
         IERC20(token).safeTransfer(to, amount);
     }
 }

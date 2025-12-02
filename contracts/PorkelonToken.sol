@@ -11,7 +11,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 /**
- * @title Porkelon (PORK)
+ * @title Porkelon (PRKL)
  * @dev The core governance and utility token of the Porkelon Ecosystem.
  * Features: Upgradeable (UUPS), Pausable, Burnable, DAO-Ready (Votes+Permit), 1% Transfer Tax.
  */
@@ -29,7 +29,7 @@ contract Porkelon is
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     
     // --- Supply Configuration ---
-    uint256 public constant MAX_SUPPLY = 100_000_000_000 * 10**18; // 100 Billion
+    uint256 public constant MAX_SUPPLY = 200_000_000_000 * 10**18; // 200 Billion
     
     // --- Fee Configuration ---
     address public teamWallet; 

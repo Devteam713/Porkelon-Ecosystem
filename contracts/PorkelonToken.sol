@@ -59,7 +59,7 @@ contract Porkelon is
         require(_wallets.length == 6, "Invalid wallet list length");
         require(_teamWallet != address(0), "Invalid team wallet");
 
-        __ERC20_init("Porkelon", "PORK");
+        __ERC20_init("Porkelon", "PRKL");
         __ERC20Burnable_init();
         __ERC20Pausable_init();
         __AccessControl_init();

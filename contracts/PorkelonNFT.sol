@@ -5,14 +5,20 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/Pausable.sol"; // <-- NEW IMPORT
 
 /// @title PorkelonNFT
-/// @notice ERC721 NFT contract with owner/public mint, ERC2981 royalties and secure withdraws.
-/// @dev Optimized slightly for gas & safety: custom errors, immutable maxSupply, ReentrancyGuard,
-///      safer withdraw pattern using call, royalty clearing on burn, and events for state changes.
-contract PorkelonNFT is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
+/// @notice ERC721 NFT contract with owner/public mint, ERC2981 royalties, secure withdraws, and transfer pausability.
+/// @dev Implements Pausable for emergency transfer halting.
+contract PorkelonNFT is 
+    ERC721URIStorage, 
+    ERC2981, 
+    Ownable, 
+    Pausable, // <-- NEW INHERITANCE
+    ReentrancyGuard 
+{
     // ---------------------------------------------------- //
-    //                        STORAGE                       //
+    //                      STORAGE                         //
     // ---------------------------------------------------- //
 
     /// @notice Next token id to be minted. Tokens start at 1.
@@ -21,7 +27,7 @@ contract PorkelonNFT is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     /// @notice Maximum number of tokens that can be minted.
     uint256 public immutable maxSupply;
 
-    /// @notice Whether public minting is enabled.
+    /// @notice Whether public minting is enabled. (Separate from Pausable, which affects transfers)
     bool public publicMintEnabled;
 
     /// @notice Price required for public mint (in wei).
@@ -30,7 +36,7 @@ contract PorkelonNFT is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     uint96 private constant MAX_BPS = 10000;
 
     // ---------------------------------------------------- //
-    //                         EVENTS                       //
+    //                       EVENTS                         //
     // ---------------------------------------------------- //
 
     event Minted(address indexed minter, uint256 indexed tokenId, string tokenURI);
@@ -40,9 +46,10 @@ contract PorkelonNFT is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     event DefaultRoyaltySet(address indexed receiver, uint96 bps);
     event TokenRoyaltySet(uint256 indexed tokenId, address indexed receiver, uint96 bps);
     event OwnerBatchMint(address indexed to, uint256[] tokenIds);
+    // Pausable events are inherited
 
     // ---------------------------------------------------- //
-    //                        ERRORS                        //
+    //                       ERRORS                         //
     // ---------------------------------------------------- //
 
     error SoldOut();
@@ -53,7 +60,7 @@ contract PorkelonNFT is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     error ZeroAddress();
 
     // ---------------------------------------------------- //
-    //                       CONSTRUCTOR                    //
+    //                      CONSTRUCTOR                     //
     // ---------------------------------------------------- //
 
     /// @param name_ token name
@@ -75,14 +82,10 @@ contract PorkelonNFT is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     }
 
     // ---------------------------------------------------- //
-    //                        MINTING                       //
+    //                       MINTING                        //
     // ---------------------------------------------------- //
 
     /// @notice Mint a token as the owner.
-    /// @dev Starts token ids at 1.
-    /// @param to recipient address
-    /// @param tokenURI metadata URI
-    /// @return tokenId minted token id
     function ownerMint(address to, string calldata tokenURI) external onlyOwner returns (uint256) {
         if (nextTokenId >= maxSupply) revert SoldOut();
         if (to == address(0)) revert ZeroAddress();
@@ -96,9 +99,6 @@ contract PorkelonNFT is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     }
 
     /// @notice Batch mint for the owner (gas-efficient for airdrops).
-    /// @param to recipient address
-    /// @param tokenURIs array of tokenURIs to mint sequentially
-    /// @return tokenIds minted token ids
     function ownerBatchMint(address to, string[] calldata tokenURIs) external onlyOwner returns (uint256[] memory) {
         uint256 count = tokenURIs.length;
         require(count > 0, "empty");
@@ -120,8 +120,6 @@ contract PorkelonNFT is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
 
     /// @notice Public payable mint.
     /// @dev Requires publicMintEnabled and correct payment. Non-reentrant.
-    /// @param tokenURI metadata URI
-    /// @return tokenId minted token id
     function publicMint(string calldata tokenURI) external payable nonReentrant returns (uint256) {
         if (!publicMintEnabled) revert PublicMintDisabled();
         if (nextTokenId >= maxSupply) revert SoldOut();
@@ -166,12 +164,21 @@ contract PorkelonNFT is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         emit TokenRoyaltySet(tokenId, receiver, bps);
     }
 
+    /// @notice Halt all token transfers (emergency pause).
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    /// @notice Re-enable all token transfers.
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
     // ---------------------------------------------------- //
     //                      WITHDRAWALS                     //
     // ---------------------------------------------------- //
 
     /// @notice Withdraw contract balance to given address using call (safer than transfer).
-    /// @param to recipient address
     function withdraw(address payable to) external onlyOwner nonReentrant {
         if (to == address(0)) revert ZeroAddress();
         uint256 bal = address(this).balance;
@@ -189,7 +196,7 @@ contract PorkelonNFT is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     receive() external payable {}
 
     // ---------------------------------------------------- //
-    //                      VIEWS / HELPERS                 //
+    //                    VIEWS / HELPERS                   //
     // ---------------------------------------------------- //
 
     /// @notice Current total minted supply (equal to last token id)
@@ -200,6 +207,20 @@ contract PorkelonNFT is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
     // ---------------------------------------------------- //
     //                      OVERRIDES                       //
     // ---------------------------------------------------- //
+    
+    /// @dev Check if transfers are paused before executing any transfer (safeTransfer, transferFrom, etc.).
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId, uint256 amount)
+        internal
+        virtual
+        override(ERC721, ERC2981) // Added ERC2981 here as it sometimes uses this hook, though ERC721 is enough for the check.
+    {
+        // Allow minting (from == address(0)) and burning (to == address(0)) even when paused.
+        // Pausing only affects actual transfers between users (from != 0 and to != 0).
+        if (from != address(0) && to != address(0)) {
+            require(!paused(), "Pausable: transfers are paused");
+        }
+        super._beforeTokenTransfer(from, to, tokenId, amount);
+    }
 
     /// @dev Clear per-token royalty on burn and clear tokenURI (ERC721URIStorage).
     function _burn(uint256 tokenId) internal virtual override(ERC721, ERC721URIStorage) {
@@ -212,7 +233,7 @@ contract PorkelonNFT is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard {
         return super.tokenURI(tokenId);
     }
 
-    /// @dev support both ERC721 and ERC2981 interfaces
+    /// @dev support ERC721, ERC2981, and Pausable interfaces
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, ERC2981) returns (bool) {
         return super.supportsInterface(interfaceId);
     }

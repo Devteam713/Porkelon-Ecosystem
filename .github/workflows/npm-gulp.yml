@@ -1,16 +1,10 @@
-# CI: Node.js + Gulp
-# - Adds caching for npm via actions/setup-node
-# - Uses npm ci when lockfile exists for deterministic installs
-# - Runs lint, tests (if scripts exist), and falls back to npx gulp for build
-# - Uploads common build artifact directories (dist, build, public, coverage)
-# - Safer checkout (fetch-depth: 0) and concurrency control
 name: Node.js CI with Gulp
 
 on:
   push:
-    branches: ["main"]
+    branches: [main]
   pull_request:
-    branches: ["main"]
+    branches: [main]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -36,53 +30,59 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js ${{ matrix.node-version }} (with npm cache)
+      - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-          cache-dependency-path: package-lock.json
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            **/package-lock.json
 
       - name: Install dependencies
         env:
           CI: true
+        shell: bash
         run: |
           if [ -f package-lock.json ]; then
             echo "package-lock.json found — using npm ci for deterministic installs"
             npm ci --prefer-offline --no-audit --progress=false
           else
-            echo "No package-lock.json — falling back to npm install"
+            echo "No package-lock.json found — falling back to npm install"
             npm install --no-audit --progress=false
           fi
 
       - name: Run lint (if defined)
+        shell: bash
         run: |
-          if npm run | sed -n '1,200p' | grep -E '(^| )lint($| )' >/dev/null 2>&1; then
+          if npm run | grep -qE '(^| )lint($| )'; then
             echo "Running lint script"
-            npm run -s lint
+            npm run lint
           else
             echo "No lint script defined — skipping"
           fi
 
       - name: Run tests (if defined)
-        continue-on-error: false
+        shell: bash
         run: |
-          if npm run | sed -n '1,200p' | grep -E '(^| )test($| )' >/dev/null 2>&1; then
+          if npm run | grep -qE '(^| )test($| )'; then
             echo "Running test script"
-            npm test --silent
+            npm test -- --ci
           else
             echo "No test script defined — skipping"
           fi
 
-      - name: Build (prefer 'build' script, otherwise run Gulp)
+      - name: Build (prefer npm build, otherwise run Gulp)
+        shell: bash
         run: |
-          if npm run | sed -n '1,200p' | grep -E '(^| )build($| )' >/dev/null 2>&1; then
+          if npm run | grep -qE '(^| )build($| )'; then
             echo "Running npm run build"
-            npm run -s build
-          else
-            echo "No build script — running npx gulp"
-            # Use npx to locate local gulp / gulp-cli; --no-color reduces log noise
+            npm run build
+          elif npx --yes gulp --tasks-simple >/dev/null 2>&1; then
+            echo "No build script — running Gulp"
             npx --yes gulp --no-color
+          else
+            echo "No build script and no Gulp configuration found — skipping build step"
           fi
 
       - name: Upload build artifacts
@@ -95,3 +95,5 @@ jobs:
             build
             public
             coverage
+          if-no-files-found: ignore
+          retention-days: 7

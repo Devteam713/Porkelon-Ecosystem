@@ -1,105 +1,83 @@
----
-🐷 Porkelon Ecosystem
+# Porkelon Ecosystem
 
-Token • Presale • Liquidity • Staking • Airdrops • Dashboard
+Porkelon is a modular DeFi ecosystem built on Polygon, designed to support token issuance, presale fundraising, staking, liquidity automation, and token distribution in a secure and upgradeable way.
 
-The Porkelon Ecosystem is a complete, modular, upgradeable DeFi infrastructure deployed on Polygon.
-It includes the Porkelon Token (upgradeable ERC-20), presale engine, liquidity manager, staking vaults, airdrop distributor, and a full Web3 dashboard application.
+The ecosystem includes:
+- UUPS-upgradeable ERC-20 token
+- presale engine with caps and claim flow
+- liquidity manager for LP automation
+- staking vaults with reward accrual
+- airdrop distribution system
+- React + Vite dashboard for wallet and contract interaction
 
-This repository contains every component needed to deploy, manage, upgrade, and operate the Porkelon ecosystem end-to-end.
+## Overview
 
+Porkelon Ecosystem provides the core components needed to deploy and operate a DeFi token project end-to-end. Each module is designed to be modular, upgradeable, and compatible with standard Polygon tooling.
 
----
+This repository includes:
+- smart contracts
+- deployment and upgrade scripts
+- testing setup
+- frontend dashboard
+- operational documentation
 
-🚀 Features
+## Architecture
 
-🪙 Porkelon Token (Upgradeable)
+- Token layer: governance and economic base
+- Presale layer: fundraising and vesting/claim logic
+- Staking layer: reward accrual and token locking
+- Liquidity layer: LP management and token routing
+- Airdrop layer: token distribution
+- Frontend: wallet-driven user interface
 
-UUPS-upgradeable ERC-20
+## Features
 
-Minting & burning (owner)
+### Token
+- UUPS upgradeable ERC-20
+- minting and burning controls
+- pausable security
+- supply management
+- DeFi-friendly integration
 
-Supply control
+### Presale
+- MATIC-to-token sales
+- rate-based pricing
+- soft cap and hard cap controls
+- contribution limits
+- token claiming
+- owner finalization
+- treasury routing
 
-Pausable & secure
+### Liquidity Manager
+- token/MATIC liquidity injection
+- router-agnostic liquidity automation
+- LP management tools
+- admin approvals
+- token recovery functions
 
-Designed for DeFi integrations
+### Staking
+- token staking
+- time-based reward emissions
+- reward-per-token accounting
+- claim + withdraw flow
+- adjustable emission rates
 
+### Airdrop
+- bulk ERC-20 distribution
+- owner-controlled distribution
+- Merkle support ready for extension
 
-💰 Presale Engine
+### Dashboard
+- wallet connect
+- token balances and supply
+- presale participation
+- staking actions
+- airdrop claiming
+- contract reads via Web3
 
-MATIC → token sale
+## Repository Structure
 
-Rate-based token pricing
-
-Softcap / hardcap
-
-Contribution limits
-
-Token claiming
-
-Owner finalization
-
-Treasury routing
-
-
-🌊 Liquidity Manager
-
-Token/ETH (MATIC) liquidity injection
-
-Router-agnostic (UniswapV2-compatible)
-
-LP automation
-
-Admin approval tools
-
-Token recovery
-
-
-📈 Staking Vaults
-
-Stake token → earn token
-
-Time-based reward emissions
-
-Reward per token accounting
-
-Withdraw + claim
-
-Adjustable emission rate
-
-
-🎁 Airdrop Distributor
-
-Bulk ERC-20 distribution
-
-Owner-controlled
-
-Merkle-drop extensions supported
-
-
-🖥 Web Dashboard
-
-A React + Vite + Tailwind dApp that provides:
-
-Wallet connection
-
-Token balance & supply view
-
-Presale participation
-
-Staking interface
-
-Claiming airdrops
-
-Live contract reads via Web3
-
-
-
----
-
-📦 Repository Structure
-
+```bash
 porkelon-ecosystem/
 ├── contracts/
 │   ├── token/
@@ -117,149 +95,103 @@ porkelon-ecosystem/
 │   └── src/
 ├── hardhat.config.js
 ├── package.json
-└── README.md
+├── README.md
+└── .env.example
 
-
----
-
-🛠 Smart Contract Stack
-
+Tech Stack
 Solidity ^0.8.20
-
-OpenZeppelin upgradeable contracts
-
+OpenZeppelin Upgradeable Contracts
 Hardhat
+Ethers.js
+React
+Vite
+Tailwind CSS
+Polygon / Amoy support
+Prerequisites
+Before starting, ensure you have:
 
-Polygonscan automated verification
-
-UUPS Proxy upgrade pattern
-
-Reentrancy protection
-
-Owner-gated administration
-
-
-
----
-
-⚙️ Setup
-
-1. Install root dependencies
-
+Node.js 18+
+npm or yarn
+MetaMask or compatible wallet
+private key for deployment
+RPC endpoint for Polygon or Amoy
+Installation
+bash
 npm install
-
-2. Install frontend dependencies
-
+Frontend dependencies:
+```
+bash
 cd frontend
 npm install
-
-3. Environment variables
-
-Create .env in the project root:
-
+Environment Setup
+Create a .env file in the project root:
+```
+env
 PRIVATE_KEY=your_wallet_key
 AMOY_RPC=https://amoy-rpc-url
 POLYGON_RPC=https://polygon-rpc.com/
 ETHERSCAN_API_KEY=polygonscan_key
+Notes:
 
-
----
-
-📤 Compile & Test
-
+Do not commit your private key
+Use testnet keys for testing
+Use a secure deployment wallet for production
+Compile and Test
+bash
 npm run compile
 npm run test
-
-
----
-
-🚀 Deployment
-
+Deployment
 Deploy to Amoy
-
+bash
 npm run deploy:amoy
-
 Deploy to Polygon Mainnet
-
+bash
 npm run deploy:polygon
-
 Upgrade Proxy
-
+bash
 npm run upgrade:polygon
-
 Verify Contracts
-
+bash
 npm run verify
-
-
----
-
-🖥 Frontend
-
-Start local dev:
-
+Frontend
+Start the local dashboard:
+```
+bash
 cd frontend
 npm run dev
-
-Build production:
-
+Build production assets:
+```
+bash
 npm run build
-
-Preview build:
-
+Preview the build:
+```
+bash
 npm run preview
+Security Considerations
+This project uses:
 
+OpenZeppelin libraries
+upgrade-safe proxy patterns
+reentrancy protection
+owner-gated admin controls
+Recommended production safeguards:
 
----
+multisig ownership
+full independent audit
+formal contract review before mainnet launch
+restrict admin privileges where possible
+verify all upgrade paths before deployment
+Roadmap / Extensions
+Possible future additions:
 
-🔐 Security
+vesting-based presale claims
+Merkle airdrop support
+anti-bot presale protections
+auto-LP and burn automation
+tiered staking reward multipliers
+mobile-first dashboard UX
+Contributing
+Pull requests and feature suggestions are welcome. If you want to propose a new feature or report a bug, open an issue with details and reproduction steps.
 
-Uses OpenZeppelin libraries
-
-Follows upgrade-safe patterns
-
-Reentrancy protected
-
-Owner-controlled administrative functions
-
-LP recovery and token recovery safeguards
-
-
-Recommended:
-Before mainnet deployment, perform a full audit and enable multisig ownership.
-
-
----
-
-📚 Extensions (Optional)
-
-Time-vested presale claims
-
-Merkle airdrops
-
-Anti-bot presale gatekeeper
-
-Auto-LP + burner automation
-
-Reward multipliers for staking tiers
-
-Frontend mobile-optimized flows
-
-
-
----
-
-🤝 Contributing
-
-PRs and feature suggestions are welcome.
-Open an issue for proposals, bug reports, or improvements.
-
-
----
-
-📄 License
-
-MIT — free to use, modify, and commercialize.
-
-
----
+License
+MIT License. Free to use, modify, and commercialize.

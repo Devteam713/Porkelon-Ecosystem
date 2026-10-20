@@ -1,79 +1,82 @@
 # Porkelon Ecosystem
 
-Porkelon is a modular DeFi ecosystem built on Polygon, designed to support token issuance, presale fundraising, staking, liquidity automation, and token distribution in a secure and upgradeable way.
+Porkelon is a modular DeFi ecosystem built on Polygon, designed to support token issuance, presale fundraising, staking, liquidity management, and token distribution in a secure, upgradeable, and developer-friendly architecture.
 
-The ecosystem includes:
-- UUPS-upgradeable ERC-20 token
-- presale engine with caps and claim flow
-- liquidity manager for LP automation
-- staking vaults with reward accrual
-- airdrop distribution system
-- React + Vite dashboard for wallet and contract interaction
+This repository contains the complete set of components needed to deploy, operate, and extend the Porkelon ecosystem end-to-end, including:
+- upgradeable ERC-20 token
+- presale engine
+- liquidity manager
+- staking vaults
+- airdrop distributor
+- React + Vite dashboard
 
 ## Overview
 
-Porkelon Ecosystem provides the core components needed to deploy and operate a DeFi token project end-to-end. Each module is designed to be modular, upgradeable, and compatible with standard Polygon tooling.
+Porkelon Ecosystem is built to provide a full-stack foundation for a token project operating in DeFi. The architecture separates the core economic and operational components into modular smart contracts and exposes them through a modern web dashboard for users and administrators.
 
-This repository includes:
-- smart contracts
-- deployment and upgrade scripts
-- testing setup
-- frontend dashboard
-- operational documentation
+The project is designed around:
+- upgradeability and maintainability
+- secure ownership controls
+- DeFi-native workflows
+- Polygon deployment compatibility
+- extensibility for future incentives and product growth
 
 ## Architecture
 
-- Token layer: governance and economic base
-- Presale layer: fundraising and vesting/claim logic
-- Staking layer: reward accrual and token locking
-- Liquidity layer: LP management and token routing
-- Airdrop layer: token distribution
-- Frontend: wallet-driven user interface
+The ecosystem is organized into a set of functional layers:
+
+- Token Layer: ERC-20 token issuance, supply controls, and upgradeability
+- Presale Layer: fundraising flow, pricing logic, caps, claims, and finalization
+- Staking Layer: reward accrual, token locks, withdrawals, and emissions
+- Liquidity Layer: LP automation and router-compatible liquidity management
+- Airdrop Layer: bulk distribution and recipient claim logic
+- Frontend Layer: wallet interaction, balance views, staking, presale, and contract reads
 
 ## Features
 
 ### Token
-- UUPS upgradeable ERC-20
-- minting and burning controls
-- pausable security
+- UUPS-upgradeable ERC-20
+- owner-controlled minting and burning
+- pause support
 - supply management
-- DeFi-friendly integration
+- security-focused upgrade pattern
+- built for DeFi integration
 
-### Presale
-- MATIC-to-token sales
-- rate-based pricing
-- soft cap and hard cap controls
+### Presale Engine
+- MATIC-to-token fundraising flow
+- rate-based token pricing
+- soft cap and hard cap enforcement
 - contribution limits
-- token claiming
-- owner finalization
+- token claim process
+- finalization by owner
 - treasury routing
 
 ### Liquidity Manager
 - token/MATIC liquidity injection
-- router-agnostic liquidity automation
-- LP management tools
-- admin approvals
-- token recovery functions
+- router-agnostic design for UniswapV2-compatible ecosystems
+- LP automation
+- admin approval workflows
+- token recovery functionality
 
-### Staking
-- token staking
+### Staking Vaults
+- stake token to earn rewards
 - time-based reward emissions
 - reward-per-token accounting
-- claim + withdraw flow
-- adjustable emission rates
+- withdraw and claim flows
+- adjustable emission rate
 
-### Airdrop
+### Airdrop Distributor
 - bulk ERC-20 distribution
-- owner-controlled distribution
-- Merkle support ready for extension
+- owner-controlled operations
+- Merkle-drop compatibility for scalable claims
 
-### Dashboard
-- wallet connect
-- token balances and supply
-- presale participation
-- staking actions
+### Web Dashboard
+- wallet connection
+- token supply and balance views
+- presale participation interface
+- staking dashboard
 - airdrop claiming
-- contract reads via Web3
+- live contract reads via Web3
 
 ## Repository Structure
 
@@ -96,102 +99,157 @@ porkelon-ecosystem/
 ├── hardhat.config.js
 ├── package.json
 ├── README.md
-└── .env.example
-
-Tech Stack
-Solidity ^0.8.20
-OpenZeppelin Upgradeable Contracts
-Hardhat
-Ethers.js
-React
-Vite
-Tailwind CSS
-Polygon / Amoy support
-Prerequisites
-Before starting, ensure you have:
-
-Node.js 18+
-npm or yarn
-MetaMask or compatible wallet
-private key for deployment
-RPC endpoint for Polygon or Amoy
-Installation
-bash
-npm install
-Frontend dependencies:
+├── .env.example
+└── .gitignore
 ```
-bash
+
+## Tech Stack
+
+- Solidity ^0.8.20
+- OpenZeppelin upgradeable contracts
+- Hardhat
+- Ethers.js
+- React
+- Vite
+- Tailwind CSS
+- Polygon / Amoy support
+
+## Prerequisites
+
+Before you start, make sure you have:
+- Node.js 18+
+- npm or yarn
+- a wallet such as MetaMask
+- a deployment wallet private key
+- an RPC endpoint for Polygon or Amoy
+
+## Quick Start
+
+Install root dependencies:
+
+```bash
+npm install
+```
+
+Install frontend dependencies:
+
+```bash
 cd frontend
 npm install
-Environment Setup
-Create a .env file in the project root:
 ```
-env
+
+## Environment Setup
+
+Create a `.env` file in the project root:
+
+```env
 PRIVATE_KEY=your_wallet_key
 AMOY_RPC=https://amoy-rpc-url
 POLYGON_RPC=https://polygon-rpc.com/
 ETHERSCAN_API_KEY=polygonscan_key
-Notes:
-
-Do not commit your private key
-Use testnet keys for testing
-Use a secure deployment wallet for production
-Compile and Test
-bash
-npm run compile
-npm run test
-Deployment
-Deploy to Amoy
-bash
-npm run deploy:amoy
-Deploy to Polygon Mainnet
-bash
-npm run deploy:polygon
-Upgrade Proxy
-bash
-npm run upgrade:polygon
-Verify Contracts
-bash
-npm run verify
-Frontend
-Start the local dashboard:
 ```
-bash
+
+Notes:
+- Never commit your private key
+- Use testnet keys for local testing
+- Use a secure wallet for production deployments
+
+## Compile and Test
+
+Compile contracts:
+
+```bash
+npm run compile
+```
+
+Run test suite:
+
+```bash
+npm run test
+```
+
+## Deployment
+
+Deploy to Amoy:
+
+```bash
+npm run deploy:amoy
+```
+
+Deploy to Polygon mainnet:
+
+```bash
+npm run deploy:polygon
+```
+
+Upgrade proxy contracts:
+
+```bash
+npm run upgrade:polygon
+```
+
+Verify deployed contracts:
+
+```bash
+npm run verify
+```
+
+## Frontend
+
+Start the local development server:
+
+```bash
 cd frontend
 npm run dev
+```
+
 Build production assets:
-```
-bash
+
+```bash
 npm run build
-Preview the build:
 ```
-bash
+
+Preview the production build:
+
+```bash
 npm run preview
-Security Considerations
-This project uses:
+```
 
-OpenZeppelin libraries
-upgrade-safe proxy patterns
-reentrancy protection
-owner-gated admin controls
+## Security Considerations
+
+This project includes:
+- OpenZeppelin security libraries
+- upgrade-safe proxy patterns
+- reentrancy protection
+- owner-controlled administrative functions
+
 Recommended production safeguards:
+- multisig governance for admin roles
+- third-party smart contract audit before mainnet launch
+- strict review of upgrade paths
+- controlled access to privileged functions
+- validation of treasury and reward routing flows
 
-multisig ownership
-full independent audit
-formal contract review before mainnet launch
-restrict admin privileges where possible
-verify all upgrade paths before deployment
-Roadmap / Extensions
-Possible future additions:
+## Roadmap / Extensions
 
-vesting-based presale claims
-Merkle airdrop support
-anti-bot presale protections
-auto-LP and burn automation
-tiered staking reward multipliers
-mobile-first dashboard UX
-Contributing
-Pull requests and feature suggestions are welcome. If you want to propose a new feature or report a bug, open an issue with details and reproduction steps.
+Possible future enhancements include:
+- vesting-based presale claims
+- Merkle airdrops
+- anti-bot presale protections
+- auto-LP and burn mechanisms
+- tiered staking reward multipliers
+- mobile-first dashboard improvements
+- analytics and treasury reporting
 
-License
-MIT License. Free to use, modify, and commercialize.
+## Contributing
+
+Contributions are welcome. If you want to propose a feature, fix a bug, or improve the ecosystem, feel free to open an issue or submit a pull request with a clear description of the change.
+
+## License
+
+MIT License. This project is free to use, modify, and commercialize.
+
+---
+
+Porkelon Ecosystem — token, presale, liquidity, staking, airdrops, and dashboard infrastructure for the Polygon ecosystem.
+```

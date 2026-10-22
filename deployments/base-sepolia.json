@@ -1,0 +1,26 @@
+{
+  "network": "baseSepolia",
+  "chainId": 84532,
+  "deployer": "0x96D130846Cbb426051Bc9eB936aEFF278AF98B39",
+  "deployedAt": "2026-10-19T11:13:41.441Z",
+  "contracts": {
+    "PorkelonToken": "0xbf05B832FDE3cA16d989D422f823BecF8B7d6dB0",
+    "PorkelonNFT": "0xfDC5BB4e07edEf229EFFaEf3Ba2033ef3F358889",
+    "PorkelonMarketplace": "0x8A2b46f6D4cb1Fba3cF490bEDafEdD1e053b6DF6",
+    "StakingRewards": "0x594C38Bf86Cc3912EcDE3bD85b3d82AD71014FC1",
+    "LiquidityMining": "0xa6a9A968c3010E14F0E95Edf92D40edEC46C60c2",
+    "PresaleVesting": "0x9205321562Fd10A728826956615fFADB7a5F0dD5",
+    "PresaleEngine": "0xb6dFd3E2e3474d5A45Db24d36d4e8b07De8d73Fe"
+  },
+  "upgrades": [
+    {
+      "label": "PorkelonV2",
+      "proxy": "0xbf05B832FDE3cA16d989D422f823BecF8B7d6dB0",
+      "oldImplementation": "0x4C9f8c2E4F41F62ccC2c9Ab809BBecD22F4627c4",
+      "newImplementation": "0x4ec7878a497e89ac02958bf3b6c8af3555205612",
+      "upgradedAt": "2026-10-19T11:35:00Z",
+      "changes": "Added MINTER_ROLE + mint(); storage layout unchanged (append-only safe).",
+      "presaleFunding": "Minted 3.5B PORK to PresaleEngine; engine excluded from 1% fee."
+    }
+  ]
+}

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
+import Web3 from 'web3';
 import { useWeb3 } from '../hooks/useWeb3';
-import { Web3Extended } from '../hooks/useWeb3';
-import { TOKEN_CONTRACT, LIQUIDITY_CONTRACT } from '../utils/constants';
+import { ABI } from '../utils/constants';
+import { AMOY_ADDRESSES } from '../contracts/addresses';
 
 interface AddLiquidityProps {
   account: `0x${string}` | null;
-  web3: Web3Extended | null;
+  web3: Web3 | null;
   addLiquidity: (porkAmount: number, maticAmount: number) => Promise<void>;
 }
 
@@ -20,12 +21,20 @@ const AddLiquidity: React.FC<AddLiquidityProps> = ({ account, web3, addLiquidity
       alert('Invalid amount or wallet not connected.');
       return;
     }
+    if (!AMOY_ADDRESSES.PorkelonToken || !AMOY_ADDRESSES.LiquidityMining) {
+      alert('Contracts are not deployed yet.');
+      return;
+    }
     setIsLoading(true);
     try {
-      const tokenContract = new web3.eth.Contract(ABI, TOKEN_CONTRACT);
-      await tokenContract.methods.approve(LIQUIDITY_CONTRACT, web3.utils.toWei(porkAmount.toString(), 'ether')).send({
+      const tokenContract = new web3.eth.Contract(ABI, AMOY_ADDRESSES.PorkelonToken);
+      const data = tokenContract.methods
+        .approve(AMOY_ADDRESSES.LiquidityMining, web3.utils.toWei(porkAmount.toString(), 'ether'))
+        .encodeABI();
+      await web3.eth.sendTransaction({
         from: account,
-        gas: await tokenContract.methods.approve(LIQUIDITY_CONTRACT, web3.utils.toWei(porkAmount.toString(), 'ether')).estimateGas({ from: account }),
+        to: AMOY_ADDRESSES.PorkelonToken,
+        data,
       });
       alert('Approval successful! You can now add liquidity.');
     } catch (err: unknown) {
@@ -56,7 +65,9 @@ const AddLiquidity: React.FC<AddLiquidityProps> = ({ account, web3, addLiquidity
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-300">Your Balance: {balance.toLocaleString()} $PORK</p>
-      <label htmlFor="pork-amount" className="block text-sm font-medium">$PORK Amount</label>
+      <label htmlFor="pork-amount" className="block text-sm font-medium">
+        $PORK Amount
+      </label>
       <input
         id="pork-amount"
         type="number"
@@ -70,9 +81,11 @@ const AddLiquidity: React.FC<AddLiquidityProps> = ({ account, web3, addLiquidity
         min="0"
         step="1"
       />
-      <label htmlFor="matic-amount" className="block text-sm font-medium">MATIC Amount</label>
+      <label htmlFor="matic-amount-liq" className="block text-sm font-medium">
+        MATIC Amount
+      </label>
       <input
-        id="matic-amount"
+        id="matic-amount-liq"
         type="number"
         value={maticAmount}
         onChange={(e) => {
@@ -84,7 +97,7 @@ const AddLiquidity: React.FC<AddLiquidityProps> = ({ account, web3, addLiquidity
         min="0"
         step="0.01"
       />
-      <div className="flex space-x-4">
+      <div className="flex flex-col sm:flex-row gap-4">
         <button
           onClick={handleApprove}
           disabled={isLoading}

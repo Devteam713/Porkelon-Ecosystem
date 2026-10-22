@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
+import Web3 from 'web3';
 import { useWeb3 } from '../hooks/useWeb3';
-import { Web3Extended } from '../hooks/useWeb3';
 
 interface MintFormProps {
   account: `0x${string}` | null;
-  web3: Web3Extended | null;
+  web3: Web3 | null;
   mintTokens: (amount: number) => Promise<void>;
 }
 

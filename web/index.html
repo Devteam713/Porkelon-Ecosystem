@@ -2,104 +2,40 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta
-      name="description"
-      content="Porkelon Presale — participate in the $PORK token sale on Polygon and join the Porkelon Ecosystem."
-    />
-    <meta
-      name="keywords"
-      content="Porkelon, $PORK, presale, Polygon, token sale, DeFi, staking, airdrop"
-    />
-    <meta name="theme-color" content="#0f172a" />
-    <meta name="color-scheme" content="dark light" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="description" content="Porkelon ($PORK) — the meme coin movement on Polygon. Total Supply: 200B | 1% transaction fee | UUPS upgradeable | Liquidity locked." />
+    <meta name="theme-color" content="#7c3aed" />
+    <meta name="color-scheme" content="light dark" />
     <meta name="referrer" content="no-referrer-when-downgrade" />
-    <meta name="robots" content="index, follow" />
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="Porkelon Presale" />
-    <meta
-      property="og:description"
-      content="Join the Porkelon Presale and access the full Porkelon Ecosystem on Polygon."
-    />
-    <meta property="og:site_name" content="Porkelon" />
-    <meta property="og:locale" content="en_US" />
 
-    <title>Porkelon Presale</title>
+    <title>Porkelon ($PORK) — Meme Coin Movement on Polygon</title>
 
-    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <!-- Favicon & PWA manifest -->
+    <link rel="icon" href="/favicon.ico" />
     <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/favicon.ico" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-
+    <!-- Performance: modulepreload -->
     <link rel="modulepreload" href="/src/main.tsx" />
 
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind CSS CDN (replace with local in production) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              brand: {
-                50: "#ecfeff",
-                100: "#cffafe",
-                200: "#a5f3fc",
-                300: "#67e8f9",
-                400: "#22d3ee",
-                500: "#06b6d4",
-                600: "#0891b2",
-                700: "#0e7490",
-                800: "#155e75",
-                900: "#164e63"
-              }
-            },
-            boxShadow: {
-              glow: "0 0 0 1px rgba(255,255,255,0.08), 0 20px 50px rgba(15,23,42,0.25)"
-            }
-          }
-        }
-      };
-    </script>
 
+    <!-- Critical CSS -->
     <style>
-      :root {
-        color-scheme: dark;
-        --bg-start: #0f172a;
-        --bg-mid: #111827;
-        --bg-end: #1e293b;
-      }
-
-      html, body, #root {
-        height: 100%;
-      }
-
-      html {
-        scroll-behavior: smooth;
-      }
-
+      :root { color-scheme: light dark; }
+      html, body, #root { height: 100%; }
       body {
         margin: 0;
-        font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        background:
-          radial-gradient(circle at top, rgba(20, 184, 166, 0.18), transparent 25%),
-          linear-gradient(135deg, var(--bg-start) 0%, var(--bg-mid) 38%, var(--bg-end) 100%);
-        color: #e2e8f0;
+        font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-      }
-
-      #root {
-        min-height: 100%;
-      }
-
-      ::selection {
-        background: rgba(45, 212, 191, 0.35);
-        color: #f8fafc;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #0b1220;
       }
     </style>
   </head>
@@ -108,11 +44,10 @@
     <div id="root" role="application" aria-label="Porkelon Presale application"></div>
 
     <noscript>
-      <div style="padding: 2rem; text-align: center; color: #f8fafc; background: #020617;">
-        JavaScript is required to run the Porkelon presale app. Please enable JavaScript and reload the page.
-      </div>
+      JavaScript is required to run the Porkelon presale. Please enable JavaScript.
     </noscript>
 
+    <!-- Entry point -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

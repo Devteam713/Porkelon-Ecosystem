@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
@@ -61,7 +61,7 @@ contract StakingRewards is ReentrancyGuard, Ownable {
      * @param _stakingToken Address of token to be staked
      * @param _rewardsToken Address of token used for rewards
      */
-    constructor(address _stakingToken, address _rewardsToken) {
+    constructor(address _stakingToken, address _rewardsToken) Ownable(msg.sender) {
         require(_stakingToken != address(0) && _rewardsToken != address(0), "StakingRewards: zero address");
         stakingToken = IERC20(_stakingToken);
         rewardsToken = IERC20(_rewardsToken);
@@ -151,10 +151,10 @@ contract StakingRewards is ReentrancyGuard, Ownable {
 
         uint256 before = stakingToken.balanceOf(address(this));
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
-        uint256 after = stakingToken.balanceOf(address(this));
+        uint256 balanceAfter = stakingToken.balanceOf(address(this));
 
-        require(after > before, "StakingRewards: no tokens received");
-        uint256 actualReceived = after - before;
+        require(balanceAfter > before, "StakingRewards: no tokens received");
+        uint256 actualReceived = balanceAfter - before;
 
         totalSupply += actualReceived;
         balances[msg.sender] += actualReceived;
@@ -223,16 +223,21 @@ contract StakingRewards is ReentrancyGuard, Ownable {
         require(reward > 0, "StakingRewards: no reward");
 
         // Pull reward tokens from owner into the contract. Owner must have approved this contract.
+        // Measure actual received amount to handle fee-on-transfer reward tokens.
+        uint256 balanceBefore = rewardsToken.balanceOf(address(this));
         rewardsToken.safeTransferFrom(msg.sender, address(this), reward);
+        uint256 balanceAfter = rewardsToken.balanceOf(address(this));
+        require(balanceAfter > balanceBefore, "StakingRewards: no reward tokens received");
+        uint256 actualReward = balanceAfter - balanceBefore;
 
-        // compute new rewardRate
+        // compute new rewardRate based on actual tokens received (not nominal amount)
         if (block.timestamp >= periodFinish) {
-            rewardRate = reward / duration;
+            rewardRate = actualReward / duration;
         } else {
             uint256 remaining = periodFinish - block.timestamp;
             // leftover rewards = remaining seconds * current rate
             uint256 leftover = remaining * rewardRate;
-            rewardRate = (reward + leftover) / duration;
+            rewardRate = (actualReward + leftover) / duration;
         }
 
         require(rewardRate > 0, "StakingRewards: rewardRate=0");

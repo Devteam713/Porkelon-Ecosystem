@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import Web3 from 'web3';
 import { useWeb3 } from '../hooks/useWeb3';
-import { Web3Extended } from '../hooks/useWeb3';
-import { TOKEN_CONTRACT, STAKING_CONTRACT } from '../utils/constants';
+import { ABI } from '../utils/constants';
+import { AMOY_ADDRESSES } from '../contracts/addresses';
 
 interface StakeWidgetProps {
   account: `0x${string}` | null;
-  web3: Web3Extended | null;
+  web3: Web3 | null;
   stakeTokens: (amount: number) => Promise<void>;
 }
 
@@ -17,14 +18,20 @@ const StakeWidget: React.FC<StakeWidgetProps> = ({ account, web3, stakeTokens })
 
   useEffect(() => {
     const fetchRewards = async () => {
-      if (web3 && account) {
-        const stakingContract = new web3.eth.Contract(ABI, STAKING_CONTRACT);
-        const rewards = await stakingContract.methods.getPendingRewards(account).call();
-        setPendingRewards(Number(web3.utils.fromWei(rewards, 'ether')));
+      if (web3 && account && AMOY_ADDRESSES.StakingRewards) {
+        try {
+          const stakingContract = new web3.eth.Contract(ABI, AMOY_ADDRESSES.StakingRewards);
+          const rewards = (await stakingContract.methods
+            .getPendingRewards(account)
+            .call()) as bigint;
+          setPendingRewards(Number(web3.utils.fromWei(rewards, 'ether')));
+        } catch (err) {
+          console.error('Failed to fetch rewards:', err);
+        }
       }
     };
     fetchRewards();
-    const interval = setInterval(fetchRewards, 60000); // Update every minute
+    const interval = setInterval(fetchRewards, 60000);
     return () => clearInterval(interval);
   }, [web3, account]);
 
@@ -33,12 +40,20 @@ const StakeWidget: React.FC<StakeWidgetProps> = ({ account, web3, stakeTokens })
       alert('Invalid amount or wallet not connected.');
       return;
     }
+    if (!AMOY_ADDRESSES.PorkelonToken || !AMOY_ADDRESSES.StakingRewards) {
+      alert('Contracts are not deployed yet.');
+      return;
+    }
     setIsLoading(true);
     try {
-      const tokenContract = new web3.eth.Contract(ABI, TOKEN_CONTRACT);
-      await tokenContract.methods.approve(STAKING_CONTRACT, web3.utils.toWei(amount.toString(), 'ether')).send({
+      const tokenContract = new web3.eth.Contract(ABI, AMOY_ADDRESSES.PorkelonToken);
+      const data = tokenContract.methods
+        .approve(AMOY_ADDRESSES.StakingRewards, web3.utils.toWei(amount.toString(), 'ether'))
+        .encodeABI();
+      await web3.eth.sendTransaction({
         from: account,
-        gas: await tokenContract.methods.approve(STAKING_CONTRACT, web3.utils.toWei(amount.toString(), 'ether')).estimateGas({ from: account }),
+        to: AMOY_ADDRESSES.PorkelonToken,
+        data,
       });
       alert('Approval successful! You can now stake.');
     } catch (err: unknown) {
@@ -67,12 +82,18 @@ const StakeWidget: React.FC<StakeWidgetProps> = ({ account, web3, stakeTokens })
       alert('Connect wallet first!');
       return;
     }
+    if (!AMOY_ADDRESSES.StakingRewards) {
+      alert('Contracts are not deployed yet.');
+      return;
+    }
     setIsLoading(true);
     try {
-      const stakingContract = new web3.eth.Contract(ABI, STAKING_CONTRACT);
-      await stakingContract.methods.claimRewards().send({
+      const stakingContract = new web3.eth.Contract(ABI, AMOY_ADDRESSES.StakingRewards);
+      const data = stakingContract.methods.claimRewards().encodeABI();
+      await web3.eth.sendTransaction({
         from: account,
-        gas: await stakingContract.methods.claimRewards().estimateGas({ from: account }),
+        to: AMOY_ADDRESSES.StakingRewards,
+        data,
       });
       alert('Rewards claimed successfully!');
       setPendingRewards(0);
@@ -93,7 +114,9 @@ const StakeWidget: React.FC<StakeWidgetProps> = ({ account, web3, stakeTokens })
       <p className="text-sm text-gray-300">Your Balance: {balance.toLocaleString()} $PORK</p>
       <p className="text-sm text-gray-300">Staked: {stakedBalance.toLocaleString()} $PORK</p>
       <p className="text-sm text-gray-300">Pending Rewards: {pendingRewards.toLocaleString()} $PORK</p>
-      <label htmlFor="stake-amount" className="block text-sm font-medium">Stake Amount ($PORK)</label>
+      <label htmlFor="stake-amount" className="block text-sm font-medium">
+        Stake Amount ($PORK)
+      </label>
       <input
         id="stake-amount"
         type="number"
@@ -107,7 +130,7 @@ const StakeWidget: React.FC<StakeWidgetProps> = ({ account, web3, stakeTokens })
         min="0"
         step="1"
       />
-      <div className="flex space-x-4">
+      <div className="flex flex-col sm:flex-row gap-4">
         <button
           onClick={handleApprove}
           disabled={isLoading}

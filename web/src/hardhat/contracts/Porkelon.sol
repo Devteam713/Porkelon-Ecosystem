@@ -29,7 +29,7 @@ contract Porkelon is
     bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
     
     // --- Supply Configuration ---
-    uint256 public constant MAX_SUPPLY = 100_000_000_000 * 10**18; // 100 Billion
+    uint256 public constant MAX_SUPPLY = 200_000_000_000 * 10**18; // 200 Billion
     
     // --- Fee Configuration ---
     address public teamWallet; 
@@ -78,7 +78,7 @@ contract Porkelon is
         _isExcludedFromFee[_teamWallet] = true;
         _isExcludedFromFee[address(this)] = true;
 
-        // --- Mint Allocations (Total 100B) ---
+        // --- Mint Allocations (Total 200B) ---
         // Dev: 25%
         _mint(_wallets[0], (MAX_SUPPLY * 25) / 100);
         // Staking: 10%

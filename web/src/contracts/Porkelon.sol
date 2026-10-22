@@ -6,8 +6,8 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract Porkelon is Initializable, ERC20Upgradeable, OwnableUpgradeable {
-    uint256 public constant TOTAL_SUPPLY = 100_000_000_000 * 10**18; // 100B $PORK
-    uint256 public constant PRESALE_ALLOCATION = 40_000_000_000 * 10**18; // 40B
+    uint256 public constant TOTAL_SUPPLY = 200_000_000_000 * 10**18; // 200B $PORK
+    uint256 public constant PRESALE_ALLOCATION = 20_000_000_000 * 10**18; // 20B (10%)
 
     event Minted(address indexed to, uint256 amount);
 

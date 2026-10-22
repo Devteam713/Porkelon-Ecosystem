@@ -9,18 +9,18 @@
     "lint": "eslint . --ext .ts,.tsx"
   },
   "dependencies": {
+    "@vitejs/plugin-react": "^6.1.2",
     "react": "latest",
     "react-dom": "latest",
-    "ethers": "latest",
-    "wagmi": "latest",
-    "@rainbow-me/rainbowkit": "latest",
-    "nft.storage": "latest",
-    "axios": "latest"
+    "web3": "^4.16.0"
   },
   "devDependencies": {
-    "vite": "latest",
-    "typescript": "latest",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/react": "latest",
-    "@types/react-dom": "latest"
+    "@types/react-dom": "latest",
+    "autoprefixer": "^10.6.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "latest",
+    "vite": "latest"
   }
 }

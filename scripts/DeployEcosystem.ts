@@ -31,7 +31,7 @@ async function main() {
   // 2. PresaleVesting (USDC on Polygon)
   // ================================================================
   const USDC = "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"; // Native USDC(e)
-  const pricePerToken = ethers.parseUnits("0.0005", 18); // 0.0005 USDC per PORK → ~$100k raise at 100B cap
+  const pricePerToken = ethers.parseUnits("0.0005", 18); // 0.0005 USDC per PORK → ~$100k raise at 200B cap
   const start = Math.floor(Date.now() / 1000) + 3600;    // +1 hour
   const end = start + 60 * 60 * 24 * 7;                  // 7 days presale
   const vestingDuration = 60 * 60 * 24 * 90;             // 90 days linear vesting

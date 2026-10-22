@@ -1,10 +1,7 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@typechain/hardhat";
-import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
-require('@nomiclabs/hardhat-waffle');
-require('@nomiclabs/hardhat-ethers');
+import "@openzeppelin/hardhat-upgrades";
 import "dotenv/config";
 
 /**
@@ -15,7 +12,10 @@ import "dotenv/config";
  * - PRIVATE_KEYS="key1,key2"
  */
 function getAccounts(): string[] {
-  const raw = process.env.PRIVATE_KEYS || process.env.PRIVATE_KEY || process.env.DEPLOYER_PRIVATE_KEY;
+  const raw =
+    process.env.PRIVATE_KEYS ||
+    process.env.PRIVATE_KEY ||
+    process.env.DEPLOYER_PRIVATE_KEY;
   if (!raw) return [];
   return raw
     .split(",")
@@ -26,7 +26,7 @@ function getAccounts(): string[] {
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.19",
+    version: "0.8.24",
     settings: {
       optimizer: {
         enabled: true,
@@ -45,26 +45,54 @@ const config: HardhatUserConfig = {
   },
 
   networks: {
-    hardhat: {
-      // customize if you need forking, chainId overrides, etc.
-    },
+    hardhat: {},
 
-    // Amoy (custom Polygon-based network)
+    // Polygon Amoy testnet
     amoy: {
-      url: process.env.AMOY_RPC || "https://rpc-amoy.polygon.technology",
+      url: process.env.AMOY_RPC || "https://api.zan.top/polygon-amoy",
       chainId: 80002,
       accounts: getAccounts(),
     },
 
-  
+    // Base Sepolia testnet
+    baseSepolia: {
+      url: process.env.BASE_SEPOLIA_RPC || "https://sepolia.base.org",
+      chainId: 84532,
+      accounts: getAccounts(),
     },
 
     // Polygon mainnet
     polygon: {
       url: process.env.POLYGON_RPC || "",
       chainId: 137,
-      
+      accounts: getAccounts(),
     },
+  },
+
+  etherscan: {
+    apiKey: {
+      polygonAmoy: process.env.POLYGONSCAN_API_KEY || "",
+      polygon: process.env.POLYGONSCAN_API_KEY || "",
+      baseSepolia: process.env.ETHERSCAN_API_KEY || process.env.POLYGONSCAN_API_KEY || "",
+    },
+    customChains: [
+      {
+        network: "polygonAmoy",
+        chainId: 80002,
+        urls: {
+          apiURL: "https://api-amoy.polygonscan.com/api",
+          browserURL: "https://amoy.polygonscan.com",
+        },
+      },
+      {
+        network: "baseSepolia",
+        chainId: 84532,
+        urls: {
+          apiURL: "https://api-sepolia.basescan.org/api",
+          browserURL: "https://sepolia.basescan.org",
+        },
+      },
+    ],
   },
 };
 
